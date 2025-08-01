@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Financial Reports Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem;
+            color: #1a202c;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 2rem;
+            grid-template-columns: 1fr;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #ecfdf5;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .nav-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #4b5563;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .nav-link:hover::before {
+            left: 100%;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #e2e8f0;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .chart-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .revenue-stat {
+            color: #10b981;
+        }
+
+        .expense-stat {
+            color: #f59e0b;
+        }
+
+        .profit-stat {
+            color: #8b5cf6;
+        }
+
+        .actions-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            font-family: inherit;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .container {
+                gap: 1rem;
+            }
+
+            .header, .nav-card, .chart-card, .actions-card {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .nav-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header, .nav-card, .chart-card, .actions-card {
+                padding: 1rem;
+                border-radius: 16px;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header Section -->
+    <div class="header">
+        <div class="status-badge">
+            <div class="pulse-dot"></div>
+            Reports Dashboard Active
+        </div>
+        <h1>📊 Financial Reports</h1>
+        <p class="subtitle">Comprehensive view of your financial performance</p>
+    </div>
+
+    <!-- Navigation Section -->
+    <div class="nav-card">
+        <h3 class="nav-title">🧭 Quick Navigation</h3>
+        <div class="nav-grid">
+            <a th:href="@{/dashboard}" class="nav-link">🏠 Dashboard</a>
+            <a th:href="@{/revenues/new}" class="nav-link">💰 Add Revenue</a>
+            <a th:href="@{/expenses/new}" class="nav-link">💸 Add Expense</a>
+            <a th:href="@{/revenues}" class="nav-link">📈 View Revenues</a>
+            <a th:href="@{/expenses}" class="nav-link">📉 View Expenses</a>
+            <a th:href="@{/reports}" class="nav-link active">📊 Reports</a>
+            <a th:href="@{/settings}" class="nav-link">⚙️ Settings</a>
+        </div>
+    </div>
+
+
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="chart-icon">📊</div>
+            <h3 class="chart-title">Revenue vs Expenses Overview</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="revenueExpenseChart"></canvas>
+        </div>
+    </div>
+
+-    <div class="actions-card">
+        <a th:href="@{/dashboard}" class="back-btn">
+            ← Back to Dashboard
+        </a>
+
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="logout-btn">
+                🚪 Logout
+            </button>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    const revenues = /*[[${revenues}]]*/ [1200, 1900, 3000, 5000, 2000, 3000];
+    const expenses = /*[[${expenses}]]*/ [1000, 1500, 2200, 3500, 1800, 2500];
+
+    // Create Chart
+    const ctx = document.getElementById('revenueExpenseChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: revenues,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                },
+                {
+                    label: 'Expenses',
+                    data: expenses,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#f59e0b',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            family: 'Inter',
+                            weight: '600',
+                            size: 14
+                        },
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        family: 'Inter',
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        family: 'Inter'
+                    },
+                    cornerRadius: 8,
+                    padding: 12
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(107, 114, 128, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter',
+                            size: 12
+                        },
+                        color: '#6b7280',
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        font: {
+                            family: 'Inter',
+                            size: 12,
+                            weight: '500'
+                        },
+                        color: '#6b7280'
+                    }
+                }
+            }
+        }
+    });
+
+    // Add subtle animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.nav-card, .chart-card, .actions-card, .header');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+</body>
+</html>
