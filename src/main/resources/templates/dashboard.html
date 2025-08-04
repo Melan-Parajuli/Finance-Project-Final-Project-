@@ -156,13 +156,11 @@
 <body>
 
 <div class="sidebar">
-    <h2>Moneezy</h2>
     <a href="/dashboard" class="active">Dashboard</a>
     <a th:href="@{/revenues/new}">Add Revenue</a>
     <a th:href="@{/expenses/new}">Add Expense</a>
     <a href="/revenues">View Revenues</a>
     <a href="/expenses">View Expenses</a>
-    <a href="/reports">Reports</a>
     <a href="/settings">Settings</a>
     <form th:action="@{/logout}" method="post">
         <button type="submit">Logout</button>
